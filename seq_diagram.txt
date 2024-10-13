@@ -1,0 +1,38 @@
+title Shipping Ships API
+
+participant Client
+participant Python
+participant JSONServer
+participant ShipView
+participant NssHandler
+participant Database
+
+Client->>Python:GET request to "/ships"
+Python->>JSONServer:Run do_GET() method
+JSONServer->>ShipView:Run list_ships() function
+ShipView->>Database:Query rows of data from SQLite database
+Database->>ShipView:Return rows of data
+loop 
+ShipView->ShipView:
+
+note right of ShipView:for each tuple representation in returned ships list,
+
+note right of ShipView:append to 'ships' list as Python dictionary with id, name, and hauler_id properties
+end
+note right of ShipView:Convert dictionary to JSON encoded string and store in serialized list
+note right of ShipView
+ShipView->>JSONServer:Return Serialized Python list of ships
+JSONServer-->>Client: Here's all yer ships (in JSON format)
+
+Client->>Python:PUT request to "/ships/id"
+Python->>JSONServer:Run do_PUT() method
+JSONServer->>ShipView:Run update_ship() function
+ShipView->>Database:Send resource to SQLite database
+Database-->>ShipView:Update resource in database or throw an Error
+ShipView-->>JSONServer:Return true if updated & false if not updated
+note left of JSONServer:If false
+JSONServer-->>Client:Display error message to Client: "Requested resource not found"
+note right of JSONServer: if true
+JSONServer->>NssHandler:Run response() method
+NssHandler-->>JSONServer: Set response code
+JSONServer-->>Client: Here is a "204 No Content" status to indicate that resource was updated
