@@ -6,7 +6,7 @@ from nss_handler import HandleRequests, status
 # Add your imports below this line
 from views import list_docks, retrieve_dock, delete_dock, update_dock
 from views import list_haulers, retrieve_hauler, delete_hauler, update_hauler
-from views import list_ships, retrieve_ship, delete_ship, update_ship
+from views import list_ships, retrieve_ship, delete_ship, update_ship, create_ship
 
 
 class JSONServer(HandleRequests):
@@ -113,9 +113,21 @@ class JSONServer(HandleRequests):
     def do_POST(self):
         """Handle POST requests from a client"""
 
-        pass
+        # Parse the URL and get the primary key
+        url = self.parse_url(self.path)
 
+        # Get the request body JSON for the new data
+        content_len = int(self.headers.get('content-length', 0))
+        request_body = self.rfile.read(content_len)
+        request_body = json.loads(request_body)
 
+        if url["requested_resource"] == "ships":
+            successfully_created = create_ship(request_body)
+            if successfully_created:
+                return self.response(request_body, status.HTTP_201_SUCCESS_CREATED.value)
+        
+        else:
+            return self.response("Bad request data", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value)
 
 
 
